@@ -1,33 +1,49 @@
 name: Final Build Fix
-on: [push]
+on:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    runs-on: ubuntu-22.04
 
-      - name: Install System Libraries
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system packages
         run: |
           sudo apt update
           sudo apt install -y build-essential git python3-dev zlib1g-dev \
-          libffi-dev libssl-dev libunwind-dev cmake libsdl2-dev
+            libffi-dev libssl-dev libunwind-dev cmake libsdl2-dev
 
-      - name: Build APK (Self-Healing)
+      - name: Setup Python and Buildozer
         run: |
-          pip3 install --user --upgrade Cython==0.29.33 buildozer
+          python3 -m pip install --upgrade pip
+          # تثبيت نسخة ثابتة من buildozer وcython
+          python3 -m pip install --user Cython==0.29.33 buildozer==1.5.0
           export PATH=$PATH:$HOME/.local/bin
-          
-          # أهم خطوة: مسح أي أثر لترمكس أو بناء قديم تماماً
-          rm -rf .buildozer/
-          
-          # البناء بدون استخدام "clean" اللي بيعمل خطأ FileNotFound
-          # السيرفر هيبني من الصفر لوحده
-          yes | buildozer -v android debug
+        shell: bash
+
+      - name: Prepare & Clean old builds
+        run: |
+          # احذف أي buildozer cache محلي موجود داخل الريبو
+          rm -rf .buildozer || true
+          # تأكد من صلاحيات ملفات المشروع إن لزم
+          find . -type f -print0 | xargs -0 -n1 chmod u+rw || true
+
+      - name: Build APK (verbose, show full logs)
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
+        run: |
+          export PATH=$PATH:$HOME/.local/bin
+          # لا تستخدم "yes |" لتجنب Broken pipe
+          buildozer -v android debug --log_level 2
+        shell: bash
+        timeout-minutes: 60
 
       - name: Upload Final APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Warrior-Ascension-Final
