@@ -7,19 +7,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt update
-          sudo apt install -y python3-pip build-essential git python3 python3-dev ffmpeg libgstreamer1.0-dev qmlscene qt5-qmake python3-setuptools libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav libgstrtspserver-1.0-dev libgtk-3-dev
+          # تثبيت المكتبات الأساسية أولاً لحل التعارض
+          sudo apt install -y libunwind-dev
+          sudo apt install -y python3-pip build-essential git python3 python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libsqlite3-dev sqlite3 bzip2 libbz2-dev libffi-dev libssl-dev
           pip3 install --user --upgrade Cython==0.29.33 buildozer
 
       - name: Build APK with Buildozer
         run: |
           export PATH=$PATH:$HOME/.local/bin
+          # أمر البناء المباشر
           buildozer android debug
-
+          
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: WarriorAscension-Game-APK
+          name: Warrior-Ascension-Game
           path: bin/*.apk
