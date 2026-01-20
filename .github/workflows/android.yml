@@ -1,12 +1,14 @@
 name: Build Warrior Ascension APK
 on: [push, pull_request]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
+        # استخدمنا أداة Enteee لأنها أسرع وأكثر استقراراً في حل مشاكل الصلاحيات
+        uses: Enteee/buildozer-action@v1.1.0
         with:
           buildozer_version: master
           command: android debug
