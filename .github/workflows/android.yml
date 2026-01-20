@@ -35,9 +35,16 @@ jobs:
           buildozer -v android debug --log_level 2 2>&1 | tee buildozer.log
         timeout-minutes: 120
 
-      - name: Upload log
+      - name: Upload buildozer log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: buildozer-log
           path: buildozer.log
+
+      - name: Upload APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: WarriorAscension-APK
+          path: ./.buildozer/android/platform/build/dists/myapp/bin/*.apk
