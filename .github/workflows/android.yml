@@ -7,33 +7,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Auto-Detect and Install Dependencies
+      - name: System Environment Setup
         run: |
           sudo apt update
-          # تثبيت المكتبات الأساسية والاحتياطية لمنع أخطاء Broken pipe و zlib
           sudo apt install -y build-essential git python3-dev zlib1g-dev \
-          libffi-dev libssl-dev libunwind-dev cmake libsdl2-dev libsdl2-image-dev \
-          libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev
+          libffi-dev libssl-dev libunwind-dev cmake libsdl2-dev
 
-          # تحديث أدوات البناء لأحدث إصدار مستقر
           pip3 install --user --upgrade Cython==0.29.33 buildozer
-          
-      - name: Build with Smart Error Handling
+
+      - name: Clean and Build APK
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # تنظيف البيئة لضمان عدم تداخل ملفات Termux مع السيرفر
-          buildozer android clean
           
-          # محاولة البناء مع معالجة ذكية للأخطاء
-          yes | buildozer -v android debug || {
-            echo "Attempting to fix missing dependencies automatically..."
-            sudo apt update && sudo apt install -y libunwind8-dev zlib1g-dev
-            yes | buildozer -v android debug
-          }
+          # الخطوة الأهم: حذف أي مخلفات قديمة تسبب خطأ FileNotFoundError
+          rm -rf .buildozer/
+          
+          # بدء بناء نظيف تماماً
+          yes | buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
 
-      - name: Upload APK
+      - name: Upload Finished APK
         uses: actions/upload-artifact@v4
         with:
           name: Warrior-Ascension-Final
