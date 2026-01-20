@@ -1,4 +1,5 @@
 name: Final Build Fix
+
 on:
   push:
     branches: [ main ]
@@ -14,37 +15,35 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt update
-          sudo apt install -y build-essential git python3-dev zlib1g-dev \
-            libffi-dev libssl-dev libunwind-dev cmake libsdl2-dev
+          sudo apt install -y \
+            build-essential \
+            git \
+            python3-dev \
+            zlib1g-dev \
+            libffi-dev \
+            libssl-dev \
+            libunwind-dev \
+            cmake \
+            libsdl2-dev
 
       - name: Setup Python and Buildozer
         run: |
           python3 -m pip install --upgrade pip
-          # تثبيت نسخة ثابتة من buildozer وcython
           python3 -m pip install --user Cython==0.29.33 buildozer==1.5.0
-          export PATH=$PATH:$HOME/.local/bin
-        shell: bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Prepare & Clean old builds
+      - name: Clean old buildozer data
         run: |
-          # احذف أي buildozer cache محلي موجود داخل الريبو
-          rm -rf .buildozer || true
-          # تأكد من صلاحيات ملفات المشروع إن لزم
-          find . -type f -print0 | xargs -0 -n1 chmod u+rw || true
+          rm -rf .buildozer
+          rm -rf ~/.buildozer
 
-      - name: Build APK (verbose, show full logs)
+      - name: Build APK (force correct NDK, full log)
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
         run: |
-          export PATH=$PATH:$HOME/.local/bin
-          # لا تستخدم "yes |" لتجنب Broken pipe
-          buildozer -v android debug --log_level 2
-        shell: bash
-        timeout-minutes: 60
+          # امنع GitHub من فرض SDK/NDK
+          unset ANDROID_NDK_ROOT
+          unset ANDROID_SDK_ROOT
 
-      - name: Upload Final APK
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Warrior-Ascension-Final
-          path: bin/*.apk
+          # خلي buildozer يستخدم نسخه المضمونة
+          export AND
