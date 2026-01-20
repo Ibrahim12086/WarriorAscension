@@ -1,5 +1,5 @@
 name: Build Warrior Ascension APK
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build:
@@ -7,25 +7,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Dependencies
+      - name: Auto-Detect and Install Dependencies
         run: |
           sudo apt update
-          # تثبيت zlib والمكتبات التي طلبتها الأداة في سجلاتك
-          sudo apt install -y python3-pip build-essential git python3 python3-dev \
-          ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
-          libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
-          libunwind-dev cmake
+          # تثبيت المكتبات الأساسية والاحتياطية لمنع أخطاء Broken pipe و zlib
+          sudo apt install -y build-essential git python3-dev zlib1g-dev \
+          libffi-dev libssl-dev libunwind-dev cmake libsdl2-dev libsdl2-image-dev \
+          libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev
 
-          # تحديث الأدوات لضمان عدم حدوث Broken pipe
+          # تحديث أدوات البناء لأحدث إصدار مستقر
           pip3 install --user --upgrade Cython==0.29.33 buildozer
-
-      - name: Build APK with Buildozer
+          
+      - name: Build with Smart Error Handling
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # تنظيف أي مخلفات قديمة رُفعت من الهاتف
+          # تنظيف البيئة لضمان عدم تداخل ملفات Termux مع السيرفر
           buildozer android clean
-          yes | buildozer android debug
           
+          # محاولة البناء مع معالجة ذكية للأخطاء
+          yes | buildozer -v android debug || {
+            echo "Attempting to fix missing dependencies automatically..."
+            sudo apt update && sudo apt install -y libunwind8-dev zlib1g-dev
+            yes | buildozer -v android debug
+          }
+        env:
+          APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
