@@ -1,4 +1,4 @@
-name: Final Build Fix
+name: Android Build
 
 on:
   push:
@@ -7,54 +7,37 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 120
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install system packages
         run: |
           sudo apt update
-          sudo apt install -y \
-            build-essential \
-            git \
-            python3-dev \
-            zlib1g-dev \
-            libffi-dev \
-            libssl-dev \
-            libunwind-dev \
-            cmake \
-            libsdl2-dev
+          sudo apt install -y build-essential git python3-dev zlib1g-dev \
+            libffi-dev libssl-dev libunwind-dev cmake libsdl2-dev
 
-      - name: Setup Python and Buildozer
+      - name: Install buildozer
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install --user Cython==0.29.33 buildozer==1.5.0
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Clean old buildozer data
+      - name: Clean build cache
         run: |
           rm -rf .buildozer
           rm -rf ~/.buildozer
 
-      - name: Build APK (force correct NDK, full log)
+      - name: Build APK and save log
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
         run: |
-          unset ANDROID_SDK_ROOT
-          unset ANDROID_NDK_ROOT
+          buildozer -v android debug --log_level 2 2>&1 | tee buildozer.log
+        timeout-minutes: 120
 
-          export ANDROIDSDK=$HOME/.buildozer/android/platform/android-sdk
-          export ANDROIDNDK=$HOME/.buildozer/android/platform/android-ndk-r25b
-
-          buildozer -v android debug --log_level 2
-        shell: bash
-
-      - name: Upload APK Artifact
+      - name: Upload log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: WarriorAscension-APK
-          path: |
-            bin/*.apk
-            .buildozer/android/platform/build-*/dists/*/bin/*.apk
+          name: buildozer-log
+          path: buildozer.log
