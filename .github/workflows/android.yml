@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 120
 
     steps:
       - name: Checkout repository
@@ -41,9 +42,19 @@ jobs:
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
         run: |
-          # امنع GitHub من فرض SDK/NDK
-          unset ANDROID_NDK_ROOT
           unset ANDROID_SDK_ROOT
+          unset ANDROID_NDK_ROOT
 
-          # خلي buildozer يستخدم نسخه المضمونة
-          export AND
+          export ANDROIDSDK=$HOME/.buildozer/android/platform/android-sdk
+          export ANDROIDNDK=$HOME/.buildozer/android/platform/android-ndk-r25b
+
+          buildozer -v android debug --log_level 2
+        shell: bash
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WarriorAscension-APK
+          path: |
+            bin/*.apk
+            .buildozer/android/platform/build-*/dists/*/bin/*.apk
