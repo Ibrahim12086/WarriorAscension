@@ -1,4 +1,4 @@
-name: Build Warrior Ascension APK
+name: Final Build Fix
 on: [push]
 
 jobs:
@@ -11,21 +11,18 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y build-essential git python3-dev zlib1g-dev \
-          libffi-dev libssl-dev libunwind-dev cmake libsdl2-dev \
-          libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+          libffi-dev libssl-dev libunwind-dev cmake libsdl2-dev
 
-      - name: Setup Buildozer
+      - name: Build APK (Self-Healing)
         run: |
           pip3 install --user --upgrade Cython==0.29.33 buildozer
           export PATH=$PATH:$HOME/.local/bin
-          # مسح شامل لأي ملفات قديمة مرفوعة من الهاتف
+          
+          # أهم خطوة: مسح أي أثر لترمكس أو بناء قديم تماماً
           rm -rf .buildozer/
-          buildozer android clean
-
-      - name: Build APK (Full Clean Build)
-        run: |
-          export PATH=$PATH:$HOME/.local/bin
-          # بناء التطبيق مع إظهار التفاصيل لحل أي مشكلة فوراً
+          
+          # البناء بدون استخدام "clean" اللي بيعمل خطأ FileNotFound
+          # السيرفر هيبني من الصفر لوحده
           yes | buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
