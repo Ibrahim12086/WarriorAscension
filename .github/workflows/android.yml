@@ -7,27 +7,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: System Environment Setup
+      - name: Install System Libraries
         run: |
           sudo apt update
           sudo apt install -y build-essential git python3-dev zlib1g-dev \
-          libffi-dev libssl-dev libunwind-dev cmake libsdl2-dev
+          libffi-dev libssl-dev libunwind-dev cmake libsdl2-dev \
+          libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
 
+      - name: Setup Buildozer
+        run: |
           pip3 install --user --upgrade Cython==0.29.33 buildozer
+          export PATH=$PATH:$HOME/.local/bin
+          # مسح شامل لأي ملفات قديمة مرفوعة من الهاتف
+          rm -rf .buildozer/
+          buildozer android clean
 
-      - name: Clean and Build APK
+      - name: Build APK (Full Clean Build)
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          
-          # الخطوة الأهم: حذف أي مخلفات قديمة تسبب خطأ FileNotFoundError
-          rm -rf .buildozer/
-          
-          # بدء بناء نظيف تماماً
+          # بناء التطبيق مع إظهار التفاصيل لحل أي مشكلة فوراً
           yes | buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
 
-      - name: Upload Finished APK
+      - name: Upload Final APK
         uses: actions/upload-artifact@v4
         with:
           name: Warrior-Ascension-Final
