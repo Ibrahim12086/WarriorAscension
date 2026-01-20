@@ -5,10 +5,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build with Buildozer
-        # استخدمنا أداة Enteee لأنها أسرع وأكثر استقراراً في حل مشاكل الصلاحيات
-        uses: Enteee/buildozer-action@v1.1.0
+        # دي النسخة الرسمية والمستقرة اللي هتحل مشكلة الـ chown
+        uses: ArtemSBulgakov/buildozer-action@v1.6.1
         with:
-          buildozer_version: master
           command: android debug
