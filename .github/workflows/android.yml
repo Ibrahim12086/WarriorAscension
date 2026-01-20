@@ -9,25 +9,30 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+      # 1️⃣ جلب كل ملفات المشروع من GitHub
       - uses: actions/checkout@v4
 
+      # 2️⃣ تثبيت المكتبات الأساسية على Ubuntu
       - name: Install system packages
         run: |
           sudo apt update
           sudo apt install -y build-essential git python3-dev zlib1g-dev \
             libffi-dev libssl-dev libunwind-dev cmake libsdl2-dev
 
+      # 3️⃣ تثبيت Python و Buildozer
       - name: Install buildozer
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install --user Cython==0.29.33 buildozer==1.5.0
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      # 4️⃣ مسح أي ملفات بناء قديمة
       - name: Clean build cache
         run: |
-          rm -rf .buildozer
+          rm -rf ./.buildozer
           rm -rf ~/.buildozer
 
+      # 5️⃣ بناء الـ APK وحفظ كل اللوج
       - name: Build APK and save log
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
@@ -35,6 +40,7 @@ jobs:
           buildozer -v android debug --log_level 2 2>&1 | tee buildozer.log
         timeout-minutes: 120
 
+      # 6️⃣ رفع اللوج لأي فشل
       - name: Upload buildozer log
         if: always()
         uses: actions/upload-artifact@v4
@@ -42,9 +48,10 @@ jobs:
           name: buildozer-log
           path: buildozer.log
 
+      # 7️⃣ رفع APK النهائي
       - name: Upload APK
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: WarriorAscension-APK
-          path: ./.buildozer/android/platform/build/dists/myapp/bin/*.apk
+          path: ./.buildozer/android/platform/build/dists/**/bin/*.apk
